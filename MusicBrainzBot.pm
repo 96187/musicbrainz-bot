@@ -113,7 +113,7 @@ sub edit_entity {
 	$mech->form_number(2);
 	$mech->field("edit-$entity.as_auto_editor", 0); # TODO: This will presumably fail if the field is not there
 	for my $k (keys %$opt) {
-		$mech->field($k, $opt->{$k});
+		$mech->field("edit-$entity.$k", $opt->{$k});
 	}
 	my $r = $mech->submit();
 	sleep 1;
