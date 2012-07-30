@@ -53,7 +53,9 @@ sub login {
 	);
 	sleep 1;
 
-	# TODO: Check that login worked
+	if (!$mech->find_link(url => "http://".$self->{'server'}."/logout")) {
+		die "Login failed.\n";
+	}
 
 	$self->{'loggedin'} = 1;
 }
