@@ -111,7 +111,9 @@ sub edit_entity {
 	$mech->get($url);
 
 	$mech->form_number(2);
-	$mech->field("edit-$entity.as_auto_editor", 0); # TODO: This will presumably fail if the field is not there
+	if ($mech->find_all_inputs(type => 'checkbox', name => "edit-$entity.as_auto_editor")) {
+		$mech->untick("edit-$entity.as_auto_editor", "1");
+	}
 	for my $k (keys %$opt) {
 		$mech->field("edit-$entity.$k", $opt->{$k});
 	}
