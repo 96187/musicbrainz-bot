@@ -100,6 +100,35 @@ sub edit_url {
 	return $self->edit_entity("url", $mbid, $opt);
 }
 
+sub edit_relationship {
+	my ($self, $id, $entity0, $entity1, $opt) = @_;
+	my $mech = $self->{'mech'};
+
+	die "No ID provided" unless $id;
+	die "No entities provided" unless $entity0 && $entity1;
+
+	$self->login() if !$self->{'loggedin'};
+
+	my $url = "http://".$self->{'server'}."/edit/relationship/edit?id=$id&type0=$entity0&type1=$entity1";
+	print "$url\n";
+	$mech->get($url);
+
+	$mech->form_number(2);
+	if ($mech->find_all_inputs(type => 'checkbox', name => "ar.as_auto_editor")) {
+		$mech->untick("ar.as_auto_editor", "1");
+	}
+	for my $k (keys %$opt) {
+		$mech->field("ar.$k", $opt->{$k});
+	}
+	my $r = $mech->submit();
+	sleep 1;
+
+	# TODO: Check that submitting worked.
+
+	return 1;
+
+}
+
 sub edit_entity {
 	my ($self, $entity, $mbid, $opt) = @_;
 	my $mech = $self->{'mech'};
