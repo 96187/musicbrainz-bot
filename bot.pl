@@ -65,7 +65,8 @@ while (my ($mbid, $comment) = $sth->fetchrow()) {
 		my $tmp = $comment;
 #		$comment =~ s/([,:] )(Olympia|Casino de Paris|Palais des Sports|Bataclan|La Cigale|Bobino|Théâtre du Châtelet|Théâtre des Champs-Élysées|New Morning|Salle Pleyel), Paris$/$1$2, Paris, France/;
 #		$comment =~ s/([,:] )(Zénith), (Paris|Lille|Strasbourg|Toulouse)$/$1$2, $3, France/;
-		$comment =~ s/([,:] )(California|Texas|Pennsylvania|Missouri|Nevada|Tennessee|Massachusetts|Alabama|Michigan|Washington|Louisiana|North Dakota)$/$1$2, USA/;
+		# no Georgia, otherwise all the US states + DC
+		$comment =~ s/([,:] )(Alabama|Alaska|Arizona|Arkansas|California|Colorado|Connecticut|Delaware|District of Columbia|Florida|Hawaii|Idaho|Illinois|Indiana|Iowa|Kansas|Kentucky|Louisiana|Maine|Maryland|Massachusetts|Michigan|Minnesota|Mississippi|Missouri|Montana|Nebraska|Nevada|New Hampshire|New Jersey|New Mexico|New York|North Carolina|North Dakota|Ohio|Oklahoma|Oregon|Pennsylvania|Rhode Island|South Carolina|South Dakota|Tennessee|Texas|Utah|Vermont|Virginia|Washington|West Virginia|Wisconsin|Wyoming)$/$1$2, USA/;
 #		$comment =~ s/([,:] )(CO|DC|FL|IA|ID|MA|MD|NJ|NV|OH|SC|WA)$/$1$2, USA/;
 		push @notes, "Adding missing country" if $comment ne $tmp;
 		$previous->{$mbid}{'missing country'}++ if $comment ne $tmp;
@@ -96,32 +97,62 @@ while (my ($mbid, $comment) = $sth->fetchrow()) {
 
 	# Standardise states
 	if (!$previous->{$mbid}{'usa states'}) {
+		my $states = {
+			Alabama                => 'AL',
+			Alaska                 => 'AK',
+			Arizona                => 'AZ',
+			Arkansas               => 'AR',
+			California             => 'CA',
+			Colorado               => 'CO',
+			Connecticut            => 'CT',
+			Delaware               => 'DE',
+			'District of Columbia' => 'DC',
+			Florida                => 'FL',
+			Georgia                => 'GA',
+			Hawaii                 => 'HI',
+			Idaho                  => 'ID',
+			Illinois               => 'IL',
+			Indiana                => 'IN',
+			Iowa                   => 'IA',
+			Kansas                 => 'KS',
+			Kentucky               => 'KY',
+			Louisiana              => 'LA',
+			Maine                  => 'ME',
+			Maryland               => 'MD',
+			Massachusetts          => 'MA',
+			Michigan               => 'MI',
+			Minnesota              => 'MN',
+			Mississippi            => 'MS',
+			Missouri               => 'MO',
+			Montana                => 'MT',
+			Nebraska               => 'NE',
+			Nevada                 => 'NV',
+			'New Hampshire'        => 'NH',
+			'New Jersey'           => 'NJ',
+			'New Mexico'           => 'NM',
+			'New York'             => 'NY',
+			'North Carolina'       => 'NC',
+			'North Dakota'         => 'ND',
+			Ohio                   => 'OH',
+			Oklahoma               => 'OK',
+			Oregon                 => 'OR',
+			Pennsylvania           => 'PA',
+			'Rhode Island'         => 'RI',
+			'South Carolina'       => 'SC',
+			'South Dakota'         => 'SD',
+			Tennessee              => 'TN',
+			Texas                  => 'TX',
+			Utah                   => 'UT',
+			Vermont                => 'VT',
+			Virginia               => 'VA',
+			Washington             => 'WA',
+			'West Virginia'        => 'WV',
+			Wisconsin              => 'WI',
+			Wyoming                => 'WY'
+		}
+
 		my $tmp = $comment;
-		$comment =~ s/([,:] )Alabama, USA$/$1AL, USA/;
-		$comment =~ s/([,:] )California, USA$/$1CA, USA/;
-		$comment =~ s/([,:] )Colorado, USA$/$1CO, USA/;
-		$comment =~ s/([,:] )Connecticut, USA$/$1CT, USA/;
-		$comment =~ s/([,:] )Florida, USA$/$1FL, USA/;
-		$comment =~ s/([,:] )Georgia, USA$/$1GA, USA/;
-		$comment =~ s/([,:] )Illinois, USA$/$1IL, USA/;
-		$comment =~ s/([,:] )Indiana, USA$/$1IN, USA/;
-		$comment =~ s/([,:] )Louisiana, USA$/$1LA, USA/;
-		$comment =~ s/([,:] )Maryland, USA$/$1MD, USA/;
-		$comment =~ s/([,:] )Massachusetts, USA$/$1MA, USA/;
-		$comment =~ s/([,:] )Michigan, USA$/$1MI, USA/;
-		$comment =~ s/([,:] )Minnesota, USA$/$1MN, USA/;
-		$comment =~ s/([,:] )Missouri, USA$/$1MO, USA/;
-		$comment =~ s/([,:] )Nevada, USA$/$1NV, USA/;
-		$comment =~ s/([,:] )New Jersey, USA$/$1NJ, USA/;
-		$comment =~ s/([,:] )Ohio, USA$/$1OH, USA/;
-		$comment =~ s/([,:] )Oregon, USA$/$1OR, USA/;
-		$comment =~ s/([,:] )Pennsylvania, USA$/$1PA, USA/;
-		$comment =~ s/([,:] )Tennessee, USA$/$1TN, USA/;
-		$comment =~ s/([,:] )Texas, USA$/$1TX, USA/;
-		$comment =~ s/([,:] )Virginia, USA$/$1VA, USA/;
-		$comment =~ s/([,:] )Washington, USA$/$1WA, USA/;
-		$comment =~ s/([,:] )West Virginia, USA$/$1WV, USA/;
-		$comment =~ s/([,:] )Wisconsin, USA$/$1WI, USA/;
+		$comment =~ s/([,:] )(Alabama|Alaska|Arizona|Arkansas|California|Colorado|Connecticut|Delaware|District of Columbia|Florida|Georgia|Hawaii|Idaho|Illinois|Indiana|Iowa|Kansas|Kentucky|Louisiana|Maine|Maryland|Massachusetts|Michigan|Minnesota|Mississippi|Missouri|Montana|Nebraska|Nevada|New Hampshire|New Jersey|New Mexico|New York|North Carolina|North Dakota|Ohio|Oklahoma|Oregon|Pennsylvania|Rhode Island|South Carolina|South Dakota|Tennessee|Texas|Utah|Vermont|Virginia|Washington|West Virginia|Wisconsin|Wyoming), USA$/$1$states->{$2}, USA/;
 
 		push @notes, "Standardise American states" if $comment ne $tmp;
 		$previous->{$mbid}{'usa states'}++ if $comment ne $tmp;
