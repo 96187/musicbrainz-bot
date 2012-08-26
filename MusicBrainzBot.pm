@@ -156,4 +156,68 @@ sub edit_entity {
 	return 1;
 }
 
+sub add_entity {
+	my ($self, $entity, $opt, $mbid) = @_;
+	my $mech = $self->{'mech'};
+
+	$self->login() if !$self->{'loggedin'};
+
+	my $url = "http://".$self->{'server'}."/$entity/create";
+	$url .= "?artist=$mbid" if $mbid;
+	print "$url\n";
+	$mech->get($url);
+
+	$mech->form_number(2);
+	if ($mech->find_all_inputs(type => 'checkbox', name => "edit-$entity.as_auto_editor")) {
+		$mech->untick("edit-$entity.as_auto_editor", "1");
+	}
+	for my $k (keys %$opt) {
+		$mech->field("edit-$entity.$k", $opt->{$k});
+	}
+	my $r = $mech->submit();
+	sleep 1;
+
+	if ($mech->uri() =~ /\/([0-9a-f-]{36})$/) {
+		return $1;
+	} else {
+		return 0;
+	}
+
+	return -1;
+}
+
+sub add_artist {
+	my ($self, $opt) = @_;
+
+	return $self->add_entity("artist", $opt);
+}
+
+sub add_release_group {
+	my ($self, $mbid, $opt) = @_;
+
+	return $self->add_entity("release-group", $opt, $mbid);
+}
+
+# the release editor differs from the other forms
+#sub add_release {
+#}
+
+sub add_recording {
+	my ($self, $mbid, $opt) = @_;
+
+	return $self->add_entity("recording", $opt, $mbid);
+}
+
+sub add_work {
+	my ($self, $opt) = @_;
+
+	return $self->add_entity("work", $opt);
+}
+
+sub add_label {
+	my ($self, $opt) = @_;
+
+	return $self->add_entity("label", $opt);
+}
+
 1;
