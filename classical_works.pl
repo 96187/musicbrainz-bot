@@ -40,8 +40,8 @@ while (my ($mbid, $name) = $sth->fetchrow()) {
 	}
 
 	my $newname = $name;
-	$newname =~ s/ No\. ?([0-9])/ no. $1/g;
-	$newname =~ s/ Op\. ?([0-9])/ op. $1/g;
+	$newname =~ s/(?<!:) No\. ?([0-9])/ no. $1/g;
+	$newname =~ s/(?<!:) Op\. ?([0-9])/ op. $1/g;
 	$newname =~ s/ in ([A-G]) [Mm]ajor/ in $1 major/g;
 
 	next if $name eq $newname;
