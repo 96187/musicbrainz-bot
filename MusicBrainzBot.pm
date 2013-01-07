@@ -220,4 +220,34 @@ sub add_label {
 	return $self->add_entity("label", $opt);
 }
 
+sub set_release_group_tags {
+	my ($self, $mbid, $opt) = @_;
+
+	return $self->set_tags("release-group", $mbid, $opt);
+}
+
+sub set_tags {
+	my ($self, $entity, $mbid, $opt) = @_;
+	my $mech = $self->{'mech'};
+
+	die "No MBID provided" unless $mbid;
+
+	$self->login() if !$self->{'loggedin'};
+
+	my $url = "http://".$self->{'server'}."/$entity/$mbid/tags";
+	print "$url\n";
+	$mech->get($url);
+
+	$mech->form_number(2);
+	for my $k (keys %$opt) {
+		$mech->field("tag.$k", $opt->{$k});
+	}
+	my $r = $mech->submit();
+	sleep 1;
+
+	# TODO: Check that submitting worked.
+
+	return 1;
+}
+
 1;
