@@ -28,7 +28,7 @@ my $sth = $dbh->prepare("
 	from work w
 	join work_name wn on wn.id = w.name
 	where w.edits_pending = 0
-	and wn.name ~* 'in [a-g] (major|minor)'
+	and wn.name ~* 'in [a-g]([ -](sharp|flat))? (major|minor)'
 	and wn.name ~ E' Op\. ?[0-9]'
 ");
 $sth->execute;
@@ -42,8 +42,11 @@ while (my ($mbid, $name) = $sth->fetchrow()) {
 	my $newname = $name;
 	$newname =~ s/(?<!:) No\. ?([0-9])/ no. $1/g;
 	$newname =~ s/(?<!:) Op\. ?([0-9])/ op. $1/g;
-	$newname =~ s/ in ([A-G]) [Mm]ajor/ in $1 major/g;
-	$newname =~ s/ in ([A-G]) [Mm]inor/ in $1 minor/g;
+
+	$newname =~ s/ in ([A-G])[ -][Ss]harp / in $1-sharp /g;
+	$newname =~ s/ in ([A-G])[ -][Ff]lat / in $1-flat /g;
+	$newname =~ s/ in ([A-G](-(sharp|flat))?) [Mm]ajor/ in $1 major/g;
+	$newname =~ s/ in ([A-G](-(sharp|flat))?) [Mm]inor/ in $1 minor/g;
 
 	next if $name eq $newname;
 
