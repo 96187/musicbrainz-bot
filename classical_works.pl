@@ -8,6 +8,7 @@ use utf8;
 use MusicBrainzBot;
 use DBI;
 use Getopt::Long;
+use Try::Tiny;
 
 my $username = "";
 my $password = "";
@@ -51,7 +52,11 @@ while (my ($mbid, $name) = $sth->fetchrow()) {
 	next if $name eq $newname;
 
 	print "Editing work $name ($mbid):\nOld: $name\nNew: $newname\n\n" if $verbose;
-	my $rv = $bot->edit_work($mbid, { 'edit_note' => 'http://musicbrainz.org/doc/Style/Classical/Language/English', 'name' => $newname }) unless $dryrun;
+	try {
+		my $rv = $bot->edit_work($mbid, { 'edit_note' => 'http://musicbrainz.org/doc/Style/Classical/Language/English', 'name' => $newname }) unless $dryrun;
+	} catch {
+		print "FAILED on $mbid, editing to $newname\n";
+	}
 	$max -= $rv;
 }
 
