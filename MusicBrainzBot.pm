@@ -138,8 +138,13 @@ sub edit_entity {
 	$self->login() if !$self->{'loggedin'};
 
 	my $url = "http://".$self->{'server'}."/$entity/$mbid/edit";
-	print "$url\n";
-	$mech->get($url);
+#	print "$url\n";
+	my $r;
+	eval { $r = $mech->get($url); };
+	if ($@) {
+		print "$@ :o error!\n";
+	}
+	print $r->code, " ", $r->status_line, "\n" unless $r->code eq "200";
 
 	$mech->form_number(2);
 	if ($mech->find_all_inputs(type => 'checkbox', name => "edit-$entity.as_auto_editor")) {
