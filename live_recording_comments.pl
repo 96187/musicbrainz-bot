@@ -17,7 +17,7 @@ my $verbose = 0;
 my $max = 100;
 my $dryrun = 0;
 
-GetOptions('username|u=s' => \$username, 'password|p=s' => \$password, 'server' => \$server, 'verbose|v' => \$verbose, 'max|m=i' => \$max, 'dryrun' => \$dryrun);
+GetOptions('username|u=s' => \$username, 'password|p=s' => \$password, 'server=s' => \$server, 'verbose|v' => \$verbose, 'max|m=i' => \$max, 'dryrun' => \$dryrun);
 
 my $bot = MusicBrainzBot->new({ username => $username, password => $password, server => $server, note => $note, verbose => $verbose });
 $bot->login() unless $dryrun;
