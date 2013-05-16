@@ -60,6 +60,12 @@ sub login {
 	$self->{'loggedin'} = 1;
 }
 
+sub edit_area {
+	my ($self, $mbid, $opt) = @_;
+
+	return $self->edit_entity("area", $mbid, $opt);
+}
+
 sub edit_artist {
 	my ($self, $mbid, $opt) = @_;
 
@@ -184,6 +190,12 @@ sub add_entity {
 	}
 
 	return -1;
+}
+
+sub add_area {
+	my ($self, $opt) = @_;
+
+	return $self->add_entity("area", $opt);
 }
 
 sub add_artist {
