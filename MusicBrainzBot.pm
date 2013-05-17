@@ -106,6 +106,62 @@ sub edit_url {
 	return $self->edit_entity("url", $mbid, $opt);
 }
 
+sub add_url_relationship {
+	my ($self, $id, $entity, $opt) = @_;
+	my $mech = $self->{'mech'};
+
+	die "No ID provided" unless $id;
+	die "No entity provided" unless $entity;
+
+	$self->login() if !$self->{'loggedin'};
+
+	my $url = "http://".$self->{'server'}."/edit/relationship/create_url?type=$entity&entity=$id";
+	print "$url\n";
+	$mech->get($url);
+
+	$mech->form_number(2);
+	if ($mech->find_all_inputs(type => 'checkbox', name => "ar.as_auto_editor")) {
+		$mech->untick("ar.as_auto_editor", "1");
+	}
+	for my $k (keys %$opt) {
+		$mech->field("ar.$k", $opt->{$k});
+	}
+	my $r = $mech->submit();
+	sleep 1;
+
+	# TODO: Check that submitting worked.
+
+	return 1;
+}
+
+sub add_relationship {
+	my ($self, $entity0, $entity1, $type0, $type1, $opt) = @_;
+	my $mech = $self->{'mech'};
+
+	die "No entities provided" unless $entity0 && $entity1;
+	die "No entity types provided" unless $type0 && $type1;
+
+	$self->login() if !$self->{'loggedin'};
+
+	my $url = "http://".$self->{'server'}."/edit/relationship/create?entity0=$entity0&entity1=$entity1&type0=$type0&type1=$type1";
+	print "$url\n";
+	$mech->get($url);
+
+	$mech->form_number(2);
+	if ($mech->find_all_inputs(type => 'checkbox', name => "ar.as_auto_editor")) {
+		$mech->untick("ar.as_auto_editor", "1");
+	}
+	for my $k (keys %$opt) {
+		$mech->field("ar.$k", $opt->{$k});
+	}
+	my $r = $mech->submit();
+	sleep 1;
+
+	# TODO: Check that submitting worked.
+
+	return 1;
+}
+
 sub edit_relationship {
 	my ($self, $id, $entity0, $entity1, $opt) = @_;
 	my $mech = $self->{'mech'};
