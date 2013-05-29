@@ -11,6 +11,8 @@ use MusicBrainzBot;
 use JSON;
 use LWP::Simple;
 
+binmode STDOUT, ":utf8";
+
 my $username = "area_bot";
 my $password = "";
 my $server = "test.musicbrainz.org";
@@ -35,7 +37,7 @@ if ($server eq "test.musicbrainz.org") {
 
 my $dbh = DBI->connect('dbi:Pg:dbname=musicbrainz_db_slave', 'musicbrainz', '', { pg_enable_utf8 => 1 }) or die;
 $dbh->do("SET search_path TO musicbrainz");
-my $sth = $dbh->prepare("select area.gid, area.name, regexp_replace(url, '.*/', '') as url from area join l_area_url on entity0=area.id join url on entity1=url.id where url ~ 'wikidata' order by area.name");
+my $sth = $dbh->prepare("select area.gid, area.name, regexp_replace(url, '.*/', '') as url from area join l_area_url on entity0=area.id join url on entity1=url.id where url ~ 'wikidata' and type != 1 order by area.name");
 $sth->execute;
 
 my %mbdata = ();
@@ -47,13 +49,19 @@ my $bot = MusicBrainzBot->new({ username => $username, password => $password, se
 #$bot->login();
 
 my %seen = ();
-
+my $type = "515";
 # Q515 # city
 # Q1749269 # city designated by government ordinance
 # Q1637706 # city with millions of inhabitants
-# Q494721 # city (Japanese subdivision thingy)
+# Q494721 # city of Japan
 # Q1549591 # Großstadt
-my $url = "http://www.wikidata.org/w/api.php?action=query&list=backlinks&bltitle=Q515&bllimit=500&format=json&blnamespace=0";
+## Q13218382 # charter city and county (California)
+# Q13218391 # charter city (California)
+# Q3957 # town
+# Q262166 # municipality of Germany
+# Q2074737 # municipalities of Spain
+# Q3327873 # local municipality (Quebec)
+my $url = "http://www.wikidata.org/w/api.php?action=query&list=backlinks&bltitle=Q$type&bllimit=500&format=json&blnamespace=0";
 
 fetch_data($url, "");
 
@@ -80,7 +88,7 @@ sub fetch_data {
 			}
 			my $K = uc($k);
 			if ($mbdata{$K}) {
-				print "City $K already in MusicBrainz.\n";
+#				print "City $K already in MusicBrainz.\n";
 				next;
 			}
 
@@ -89,8 +97,8 @@ sub fetch_data {
 			my $name = $q->{labels}->{en}->{value};
 			my $wd = "http://www.wikidata.org/wiki/$K";
 
-			# Check that P31 (instance of) is Q515 (city)
-			next unless grep /^515$/, map { $_->{mainsnak}->{datavalue}->{value}->{'numeric-id'} } @{ $q->{claims}->{p31} };
+			# Check that P31 (instance of) or P132 (type of subdivision) is Q515 (city) or whatever type is currently selected
+			next unless grep /^$type$/, map { $_->{mainsnak}->{datavalue}->{value}->{'numeric-id'} } @{ $q->{claims}->{p31} }, @{ $q->{claims}->{p132} };
 
 			# Get the parent administrative division
 			my $parent = get_admin_parent($q);
@@ -106,9 +114,12 @@ sub fetch_data {
 				next;
 			}
 
-
+			if (!$name) {
+				print "$K has no name\n";
+				next;
+			}
 			print "$K\t$name\thas parent $parent\t$mbdata{$parent}{'name'}\n";
-
+#			next;
 			my $mbid = $bot->add_area({
 				name => $name,
 				sort_name => $name,
@@ -154,7 +165,7 @@ sub fetch_data {
 sub get_admin_parent {
 	my ($q) = shift;
 
-	my @i = sort map { $_->{mainsnak}->{datavalue}->{value}->{'numeric-id'} } @{ $q->{claims}->{p131} }; # is in administrative unit
+	my @i = sort grep { $mbdata{"Q$_"} } map { $_->{mainsnak}->{datavalue}->{value}->{'numeric-id'} } @{ $q->{claims}->{p131} }; # is in administrative unit
 	if (scalar @i > 1) {
 		print "Too many parents for $q->{title}: ", join ("; ", @i), "\n";
 		return "";
