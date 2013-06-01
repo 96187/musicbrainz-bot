@@ -72,7 +72,7 @@ for my $type (keys %types) {
 }
 
 my %ids = map { $_ => 1 } @all_ids;
-my @uniq_ids = keys %ids;
+my @uniq_ids = sort keys %ids;
 print "Found ", scalar @uniq_ids, " pages.\n";
 fetch_pages(@uniq_ids);
 
@@ -183,12 +183,17 @@ sub fetch_pages {
 sub get_admin_parent {
 	my ($q) = shift;
 
-	my @i = sort grep { $mbdata{"Q$_"} } map { $_->{mainsnak}->{datavalue}->{value}->{'numeric-id'} } @{ $q->{claims}->{p131} }; # is in administrative unit
-	if (scalar @i > 1) {
-		print "Too many parents for $q->{title}: ", join ("; ", @i), "\n";
+	my @parents = map { $_->{mainsnak}->{datavalue}->{value}->{'numeric-id'} } @{ $q->{claims}->{p131} }; # is in administrative unit
+	my @i = sort grep { $mbdata{"Q$_"} } @parents; #map { $_->{mainsnak}->{datavalue}->{value}->{'numeric-id'} } @{ $q->{claims}->{p131} }; # is in administrative unit
+	if (@i && scalar @i > 1) {
+		print "Too many parents in MusicBrainz for $q->{title}: ", join ("; ", @i), "\n";
+		return "";
+	} elsif (!@i && scalar @parents > 1) {
+		print "Too many parents and none in MusicBrainz for $q->{title}: ", join ("; ", @parents), "\n";
 		return "";
 	}
 	my $parent = shift @i;
+	$parent = shift @parents unless $parent;
 
 	if ($parent && !$mbdata{"Q$parent"} && !$seen{"Q$parent"}) {
 		$seen{"Q$parent"}++;
