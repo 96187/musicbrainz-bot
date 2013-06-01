@@ -10,6 +10,7 @@ use Getopt::Long;
 use MusicBrainzBot;
 use JSON;
 use LWP::Simple;
+#use List::MoreUtils qw(uniq);
 
 binmode STDOUT, ":utf8";
 
@@ -21,9 +22,6 @@ my $verbose = 1;
 my $max = 2000;
 my $dryrun = 0;
 my $country = "";
-#my $cc = "ME";
-my @cc = qw();
-
 my $wikipedialt = 355;
 my $wikidatalt = 358;
 my $partoflt = 356;
@@ -49,32 +47,56 @@ my $bot = MusicBrainzBot->new({ username => $username, password => $password, se
 #$bot->login();
 
 my %seen = ();
-my $type = "515";
-# Q515 # city
-# Q1749269 # city designated by government ordinance
-# Q1637706 # city with millions of inhabitants
-# Q494721 # city of Japan
-# Q1549591 # Großstadt
-## Q13218382 # charter city and county (California)
-# Q13218391 # charter city (California)
-# Q3957 # town
-# Q262166 # municipality of Germany
-# Q2074737 # municipalities of Spain
-# Q3327873 # local municipality (Quebec)
-my $url = "http://www.wikidata.org/w/api.php?action=query&list=backlinks&bltitle=Q$type&bllimit=500&format=json&blnamespace=0";
+#my $type = "515";
+my %types = (
+	"515" => "city",
+	"1749269" => "city designated by government ordinance",
+	"1637706" => "city with millions of inhabitants",
+	"494721" => "city of Japan",
+	"1549591" => "Großstadt",
+#	"13218382" => "charter city and county (California)",
+	"13218391" => "charter city (California)",
+	"3957" => "town",
+#	"262166" => "municipality of Germany",
+#	"2074737" => "municipalities of Spain",
+	"3327873" => "local municipality", # Quebec
+	"308891" => "Special wards of Tokyo",
+);
 
-fetch_data($url, "");
+my @all_ids = ();
 
-sub fetch_data {
+for my $type (keys %types) {
+	print STDERR "Fetching pages linked to Q$type...\n";
+	my $url = "http://www.wikidata.org/w/api.php?action=query&list=backlinks&bltitle=Q$type&bllimit=500&format=json&blnamespace=0";
+	fetch_ids($url, "");
+}
+
+my %ids = map { $_ => 1 } @all_ids;
+my @uniq_ids = keys %ids;
+print "Found ", scalar @uniq_ids, " pages.\n";
+fetch_pages(@uniq_ids);
+
+sub fetch_ids {
 	my ($url, $cont) = @_;
 
+#	print "$url$cont\n";
 	my $dataj = get("$url$cont");
 	my $data = decode_json($dataj);
 
 	# Extract page names linking to this page
 	my @ids = map { $_->{title} } @{ $data->{query}->{backlinks} };
+	push @all_ids, @ids;
 
-	# Can only fetch 50 pages at a time
+	# There were more than 500 pages linking here, fetch some more
+	if ($data->{'query-continue'}->{'backlinks'}->{'blcontinue'}) {
+		my $blcont = "&blcontinue=".$data->{'query-continue'}->{'backlinks'}->{'blcontinue'};
+		fetch_ids($url, $blcont);
+	}
+}
+
+sub fetch_pages {
+	my @ids = @_;
+
 	while (@ids) {
 		my $ids = join "|", splice @ids, 0, 50;
 		my $pagedataj = get("http://www.wikidata.org/w/api.php?action=wbgetentities&ids=$ids&format=json");
@@ -98,12 +120,13 @@ sub fetch_data {
 			my $wd = "http://www.wikidata.org/wiki/$K";
 
 			# Check that P31 (instance of) or P132 (type of subdivision) is Q515 (city) or whatever type is currently selected
-			next unless grep /^$type$/, map { $_->{mainsnak}->{datavalue}->{value}->{'numeric-id'} } @{ $q->{claims}->{p31} }, @{ $q->{claims}->{p132} };
+			my $type = join "|", keys %types;
+			next unless grep /^($type)$/, map { $_->{mainsnak}->{datavalue}->{value}->{'numeric-id'} } @{ $q->{claims}->{p31} }, @{ $q->{claims}->{p132} };
 
 			# Get the parent administrative division
 			my $parent = get_admin_parent($q);
 			if (!$parent) {
-				print "No parent for $k, skipping.\n";
+#				print "No parent for $k, skipping.\n";
 				next;
 			}
 			$parent = "Q$parent";
@@ -154,13 +177,8 @@ sub fetch_data {
 		}
 	}
 
-	# There were more than 500 pages linking here, fetch some more
-	if ($data->{'query-continue'}->{'backlinks'}->{'blcontinue'}) {
-		my $blcont = "&blcontinue=".$data->{'query-continue'}->{'backlinks'}->{'blcontinue'};
-		fetch_data($url, $blcont);
-	}
-}
 
+}
 
 sub get_admin_parent {
 	my ($q) = shift;
