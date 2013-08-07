@@ -38,7 +38,7 @@ sub login {
 	}
 
 	# load login page
-	my $url = "http://".$self->{'server'}."/login";
+	my $url = "https://".$self->{'server'}."/login";
 	print "Logging in as ".$self->{'username'}." at $url.\n" if $self->{'verbose'};
 	$mech->get($url);
 	sleep 1;
@@ -53,7 +53,7 @@ sub login {
 	);
 	sleep 1;
 
-	if (!$mech->find_link(url => "http://".$self->{'server'}."/logout")) {
+	if (!$mech->find_link(url => "https://".$self->{'server'}."/logout")) {
 		die "Login failed.\n";
 	}
 
@@ -115,8 +115,8 @@ sub add_url_relationship {
 
 	$self->login() if !$self->{'loggedin'};
 
-	my $url = "http://".$self->{'server'}."/edit/relationship/create_url?type=$entity&entity=$id";
-	print "$url\n";
+	my $url = "https://".$self->{'server'}."/edit/relationship/create_url?type=$entity&entity=$id";
+#	print "$url\n";
 	$mech->get($url);
 
 	$mech->form_number(2);
@@ -143,7 +143,7 @@ sub add_relationship {
 
 	$self->login() if !$self->{'loggedin'};
 
-	my $url = "http://".$self->{'server'}."/edit/relationship/create?entity0=$entity0&entity1=$entity1&type0=$type0&type1=$type1";
+	my $url = "https://".$self->{'server'}."/edit/relationship/create?entity0=$entity0&entity1=$entity1&type0=$type0&type1=$type1";
 	print "$url\n";
 	$mech->get($url);
 
@@ -171,7 +171,7 @@ sub edit_relationship {
 
 	$self->login() if !$self->{'loggedin'};
 
-	my $url = "http://".$self->{'server'}."/edit/relationship/edit?id=$id&type0=$entity0&type1=$entity1";
+	my $url = "https://".$self->{'server'}."/edit/relationship/edit?id=$id&type0=$entity0&type1=$entity1";
 	print "$url\n";
 	$mech->get($url);
 
@@ -199,8 +199,8 @@ sub edit_entity {
 
 	$self->login() if !$self->{'loggedin'};
 
-	my $url = "http://".$self->{'server'}."/$entity/$mbid/edit";
-	print "$url\n";
+	my $url = "https://".$self->{'server'}."/$entity/$mbid/edit";
+#	print "$url\n";
 	$mech->get($url);
 
 	$mech->form_number(2);
@@ -224,9 +224,9 @@ sub add_entity {
 
 	$self->login() if !$self->{'loggedin'};
 
-	my $url = "http://".$self->{'server'}."/$entity/create";
+	my $url = "https://".$self->{'server'}."/$entity/create";
 	$url .= "?artist=$mbid" if $mbid;
-	print "$url\n";
+#	print "$url\n";
 	$mech->get($url);
 
 	$mech->form_number(2);
@@ -302,13 +302,41 @@ sub set_tags {
 
 	$self->login() if !$self->{'loggedin'};
 
-	my $url = "http://".$self->{'server'}."/$entity/$mbid/tags";
+	my $url = "https://".$self->{'server'}."/$entity/$mbid/tags";
 	print "$url\n";
 	$mech->get($url);
 
 	$mech->form_number(2);
 	for my $k (keys %$opt) {
 		$mech->field("tag.$k", $opt->{$k});
+	}
+	my $r = $mech->submit();
+	sleep 1;
+
+	# TODO: Check that submitting worked.
+
+	return 1;
+}
+
+sub add_alias {
+	my ($self, $id, $entity, $opt) = @_;
+	my $mech = $self->{'mech'};
+
+	die "No ID provided" unless $id;
+	die "No entity provided" unless $entity;
+
+	$self->login() if !$self->{'loggedin'};
+
+	my $url = "https://".$self->{'server'}."/$entity/$id/add-alias";
+	print "$url\n";
+	$mech->get($url);
+
+	$mech->form_number(2);
+	if ($mech->find_all_inputs(type => 'checkbox', name => "ar.as_auto_editor")) {
+		$mech->untick("ar.as_auto_editor", "1");
+	}
+	for my $k (keys %$opt) {
+		$mech->field("edit-alias.$k", $opt->{$k});
 	}
 	my $r = $mech->submit();
 	sleep 1;
