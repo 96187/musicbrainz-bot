@@ -91,6 +91,7 @@ while (my ($mbid, $comment) = $sth->fetchrow()) {
 		$comment =~ s/([,:] )SE$/$1Sweden/;
 		$comment =~ s/([,:] )SU$/$1Soviet Union/;
 		$comment =~ s/([,:] )US$/$1USA/;
+		$comment =~ s/([,:] )U\.S\.A\.?$/$1USA/;
 		push @notes, "Standardising country name" if $comment ne $tmp;
 		$previous->{$mbid}{'country names'}++ if $comment ne $tmp;
 	}
