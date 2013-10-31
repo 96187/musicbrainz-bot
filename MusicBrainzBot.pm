@@ -9,6 +9,7 @@ sub new {
 	my %hash;
 	%hash = (
 		'server' => $args->{server} || 'musicbrainz.org',
+		'protocol' => $args->{protocol} || 'https://',
 		'username' => $args->{username},
 		'password' => $args->{password},
 		'useragent' => 'MusicBrainz bot/0.1',
@@ -38,7 +39,7 @@ sub login {
 	}
 
 	# load login page
-	my $url = "https://".$self->{'server'}."/login";
+	my $url = $self->{'protocol'}.$self->{'server'}."/login";
 	print "Logging in as ".$self->{'username'}." at $url.\n" if $self->{'verbose'};
 	$mech->get($url);
 	sleep 1;
@@ -53,7 +54,7 @@ sub login {
 	);
 	sleep 1;
 
-	if (!$mech->find_link(url => "https://".$self->{'server'}."/logout")) {
+	if (!$mech->find_link(url => $self->{'protocol'}.$self->{'server'}."/logout")) {
 		die "Login failed.\n";
 	}
 
@@ -64,6 +65,12 @@ sub edit_area {
 	my ($self, $mbid, $opt) = @_;
 
 	return $self->edit_entity("area", $mbid, $opt);
+}
+
+sub edit_place {
+	my ($self, $mbid, $opt) = @_;
+
+	return $self->edit_entity("place", $mbid, $opt);
 }
 
 sub edit_artist {
@@ -115,7 +122,7 @@ sub add_url_relationship {
 
 	$self->login() if !$self->{'loggedin'};
 
-	my $url = "https://".$self->{'server'}."/edit/relationship/create_url?type=$entity&entity=$id";
+	my $url = $self->{'protocol'}.$self->{'server'}."/edit/relationship/create_url?type=$entity&entity=$id";
 #	print "$url\n";
 	$mech->get($url);
 
@@ -143,7 +150,7 @@ sub add_relationship {
 
 	$self->login() if !$self->{'loggedin'};
 
-	my $url = "https://".$self->{'server'}."/edit/relationship/create?entity0=$entity0&entity1=$entity1&type0=$type0&type1=$type1";
+	my $url = $self->{'protocol'}.$self->{'server'}."/edit/relationship/create?entity0=$entity0&entity1=$entity1&type0=$type0&type1=$type1";
 	print "$url\n";
 	$mech->get($url);
 
@@ -171,7 +178,7 @@ sub edit_relationship {
 
 	$self->login() if !$self->{'loggedin'};
 
-	my $url = "https://".$self->{'server'}."/edit/relationship/edit?id=$id&type0=$entity0&type1=$entity1";
+	my $url = $self->{'protocol'}.$self->{'server'}."/edit/relationship/edit?id=$id&type0=$entity0&type1=$entity1";
 	print "$url\n";
 	$mech->get($url);
 
@@ -199,7 +206,7 @@ sub edit_entity {
 
 	$self->login() if !$self->{'loggedin'};
 
-	my $url = "https://".$self->{'server'}."/$entity/$mbid/edit";
+	my $url = $self->{'protocol'}.$self->{'server'}."/$entity/$mbid/edit";
 #	print "$url\n";
 	$mech->get($url);
 
@@ -224,7 +231,7 @@ sub add_entity {
 
 	$self->login() if !$self->{'loggedin'};
 
-	my $url = "https://".$self->{'server'}."/$entity/create";
+	my $url = $self->{'protocol'}.$self->{'server'}."/$entity/create";
 	$url .= "?artist=$mbid" if $mbid;
 #	print "$url\n";
 	$mech->get($url);
@@ -253,6 +260,13 @@ sub add_area {
 
 	return $self->add_entity("area", $opt);
 }
+
+sub add_place {
+	my ($self, $opt) = @_;
+
+	return $self->add_entity("place", $opt);
+}
+
 
 sub add_artist {
 	my ($self, $opt) = @_;
@@ -302,7 +316,7 @@ sub set_tags {
 
 	$self->login() if !$self->{'loggedin'};
 
-	my $url = "https://".$self->{'server'}."/$entity/$mbid/tags";
+	my $url = $self->{'protocol'}.$self->{'server'}."/$entity/$mbid/tags";
 	print "$url\n";
 	$mech->get($url);
 
@@ -327,7 +341,7 @@ sub add_alias {
 
 	$self->login() if !$self->{'loggedin'};
 
-	my $url = "https://".$self->{'server'}."/$entity/$id/add-alias";
+	my $url = $self->{'protocol'}.$self->{'server'}."/$entity/$id/add-alias";
 	print "$url\n";
 	$mech->get($url);
 
